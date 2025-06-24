@@ -136,41 +136,59 @@
                 fileName = 'baisi.jpg';
             }
             
-            // 使用Fetch API获取数据
-            fetch(apiUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('网络响应不正常');
+            // 使用XMLHttpRequest获取数据
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', apiUrl, true);
+            
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.code === '1') {
+                            const imageUrl = data.img;
+                            
+                            // 创建隐藏的iframe用于下载（模拟原Java代码中的下载行为）
+                            const iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            iframe.src = imageUrl;
+                            document.body.appendChild(iframe);
+                            
+                            // 短暂延迟后显示图片
+                            setTimeout(() => {
+                                imageElement.src = imageUrl;
+                                imageElement.style.display = 'block';
+                                loadingElement.textContent = '点击按钮获取图片';
+                            }, 500);
+                        } else {
+                            throw new Error('API返回错误代码: ' + data.code);
+                        }
+                    } catch (e) {
+                        console.error('解析JSON失败:', e);
+                        loadingElement.textContent = '点击按钮获取图片';
+                        errorElement.textContent = '解析数据失败: ' + e.message;
+                        errorElement.style.display = 'block';
+                        imageElement.style.display = 'none';
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.code === '1') {
-                        const imageUrl = data.img;
-                        
-                        // 创建隐藏的iframe用于下载（模拟原Java代码中的下载行为）
-                        const iframe = document.createElement('iframe');
-                        iframe.style.display = 'none';
-                        iframe.src = imageUrl;
-                        document.body.appendChild(iframe);
-                        
-                        // 短暂延迟后显示图片
-                        setTimeout(() => {
-                            imageElement.src = imageUrl;
-                            imageElement.style.display = 'block';
-                            loadingElement.textContent = '点击按钮获取图片';
-                        }, 500);
-                    } else {
-                        throw new Error('API返回错误代码: ' + data.code);
-                    }
-                })
-                .catch(error => {
-                    console.error('获取图片失败:', error);
+                } else {
+                    const error = new Error(xhr.statusText);
+                    error.code = xhr.status;
+                    console.error('请求失败:', error);
                     loadingElement.textContent = '点击按钮获取图片';
-                    errorElement.textContent = '获取图片失败: ' + error.message;
+                    errorElement.textContent = '请求失败: ' + error.message;
                     errorElement.style.display = 'block';
                     imageElement.style.display = 'none';
-                });
+                }
+            };
+            
+            xhr.onerror = function() {
+                console.error('请求出错');
+                loadingElement.textContent = '点击按钮获取图片';
+                errorElement.textContent = '网络请求出错';
+                errorElement.style.display = 'block';
+                imageElement.style.display = 'none';
+            };
+            
+            xhr.send();
         }
     </script>
 </body>
