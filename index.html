@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>随机丝袜图片生成器</title>
+    <title>随机黑丝图片生成器</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -41,12 +41,6 @@
             color: white;
         }
         
-        #white-stockings {
-            background-color: #f1f1f1;
-            color: #333;
-            border: 1px solid #ddd;
-        }
-        
         button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -54,10 +48,6 @@
         
         #black-stockings:hover {
             background-color: #555;
-        }
-        
-        #white-stockings:hover {
-            background-color: #fff;
         }
         
         .image-container {
@@ -97,16 +87,15 @@
     </style>
 </head>
 <body>
-    <h1>随机丝袜图片生成器</h1>
+    <h1>随机黑丝图片生成器</h1>
     
     <div class="button-container">
-        <button id="black-stockings" onclick="fetchImage('黑丝')">黑丝</button>
-        <button id="white-stockings" onclick="fetchImage('白丝')">白丝</button>
+        <button id="black-stockings" onclick="fetchImage()">获取黑丝图片</button>
     </div>
     
     <div class="image-container">
-        <img id="result-image" alt="随机丝袜图片">
-        <div id="loading" class="loading">点击按钮获取图片</div>
+        <img id="result-image" alt="随机黑丝图片">
+        <div id="loading" class="loading">正在获取图片...</div>
         <div id="error" class="error" style="display: none;"></div>
     </div>
     
@@ -115,7 +104,7 @@
     </div>
     
     <script>
-        function fetchImage(type) {
+        function fetchImage() {
             const loadingElement = document.getElementById('loading');
             const imageElement = document.getElementById('result-image');
             const errorElement = document.getElementById('error');
@@ -125,70 +114,43 @@
             errorElement.style.display = 'none';
             imageElement.style.display = 'none';
             
-            let apiUrl;
-            let fileName;
+            const apiUrl = 'https://v2.xxapi.cn/api/heisi';
             
-            if (type === '黑丝') {
-                apiUrl = 'https://api.yujn.cn/api/heisi.php?type=json';
-                fileName = 'heisi.jpg';
-            } else if (type === '白丝') {
-                apiUrl = 'https://api.yujn.cn/api/baisi.php?type=json';
-                fileName = 'baisi.jpg';
-            }
-            
-            // 使用XMLHttpRequest获取数据
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', apiUrl, true);
-            
-            xhr.onload = function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        const data = JSON.parse(xhr.responseText);
-                        if (data.code === '1') {
-                            const imageUrl = data.img;
-                            
-                            // 创建隐藏的iframe用于下载（模拟原Java代码中的下载行为）
-                            const iframe = document.createElement('iframe');
-                            iframe.style.display = 'none';
-                            iframe.src = imageUrl;
-                            document.body.appendChild(iframe);
-                            
-                            // 短暂延迟后显示图片
-                            setTimeout(() => {
-                                imageElement.src = imageUrl;
-                                imageElement.style.display = 'block';
-                                loadingElement.textContent = '点击按钮获取图片';
-                            }, 500);
-                        } else {
-                            throw new Error('API返回错误代码: ' + data.code);
-                        }
-                    } catch (e) {
-                        console.error('解析JSON失败:', e);
-                        loadingElement.textContent = '点击按钮获取图片';
-                        errorElement.textContent = '解析数据失败: ' + e.message;
-                        errorElement.style.display = 'block';
-                        imageElement.style.display = 'none';
+            // 使用Fetch API获取数据
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
                     }
-                } else {
-                    const error = new Error(xhr.statusText);
-                    error.code = xhr.status;
-                    console.error('请求失败:', error);
-                    loadingElement.textContent = '点击按钮获取图片';
-                    errorElement.textContent = '请求失败: ' + error.message;
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.code === 200) {
+                        const imageUrl = data.data;
+                        
+                        // 创建隐藏的iframe用于下载（模拟原Java代码中的下载行为）
+                        const iframe = document.createElement('iframe');
+                        iframe.style.display = 'none';
+                        iframe.src = imageUrl;
+                        document.body.appendChild(iframe);
+                        
+                        // 短暂延迟后显示图片
+                        setTimeout(() => {
+                            imageElement.src = imageUrl;
+                            imageElement.style.display = 'block';
+                            loadingElement.style.display = 'none';
+                        }, 500);
+                    } else {
+                        throw new Error('API返回错误: ' + (data.msg || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    console.error('获取图片失败:', error);
+                    loadingElement.style.display = 'none';
+                    errorElement.textContent = '获取图片失败: ' + error.message;
                     errorElement.style.display = 'block';
                     imageElement.style.display = 'none';
-                }
-            };
-            
-            xhr.onerror = function() {
-                console.error('请求出错');
-                loadingElement.textContent = '点击按钮获取图片';
-                errorElement.textContent = '网络请求出错';
-                errorElement.style.display = 'block';
-                imageElement.style.display = 'none';
-            };
-            
-            xhr.send();
+                });
         }
     </script>
 </body>
